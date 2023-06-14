@@ -13,25 +13,52 @@ import json
 
 class Aluno:
     def __init__(self, nome, matricula):
-        self.__nome = nome
-        self.__matricula = matricula
-        self.alunos= []
+        self.nome = nome
+        self.matricula = matricula
 
 
 class Professor:
     def __init__(self, nome, matricula):
-        self.__nome = nome
-        self.__matricula = matricula
+        self.nome = nome
+        self.matricula = matricula
         self.professores=[]
 
 class Coordenador:
     def __init__(self):
         self.__coordenador = "Alisson"
+        self.turmas = []
+
+    def criar_turma(self):
+        disciplina = input("Digite o nome da disciplina: ")
+        professor = self.escolher_professor()
+        alunos = self.escolher_alunos()
+        turma = Turma(disciplina, professor)
+        for aluno in alunos:
+            turma.adicionar_aluno(aluno)
+        self.turmas.append(turma)
+
     
 
 
 class Turma(Professor, Aluno):
-    def criar_turma(self, aluno, professor):
-        self.turma = []
-        self.append(aluno,professor)
-        
+    def __init__(self, disciplina, professor):
+        self.disciplina = disciplina
+        self.professor = professor
+        self.alunos= []
+    
+    def adicionar_aluno(self, aluno):
+        self.alunos.append(aluno)
+    
+    def remover_aluno(self, aluno):
+        self.aluno.remove(aluno)
+    
+    def listar_alunos(self):
+        for aluno in self.alunos:
+            print(f"Nome: {aluno.nome}, Matrícula: {aluno.matricula}")
+    
+    def visualizar_turma(self):
+        print(f"Disciplina:  {self.disciplina}")
+        print(f"Professor:  {self.professor.nome}")
+        print("Alunos:")
+        self.listar_alunos()
+    
