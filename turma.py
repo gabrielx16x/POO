@@ -1,6 +1,4 @@
 import sqlite3
-from tkinter import * 
-import tkinter as tk
 try:
     con = sqlite3.connect('gestao_turmas.db')
     print("Conexão com o banco de dados realizado com sucesso")
@@ -12,7 +10,7 @@ try:
         cur = con.cursor()
         cur.execute(""" CREATE TABLE IF NOT EXISTS Alunos(id_aluno INTEGER PRIMARY KEY AUTOINCREMENT,
                     nome TEXT, 
-                    matricula TEXT
+                    matricula TEXT UNIQUE
         )""")
         
         print("Tabela Alunos criada com sucesso.")
@@ -27,7 +25,7 @@ try:
         cur.execute(""" CREATE TABLE IF NOT EXISTS Professores (
                     id_professor INTEGER PRIMARY KEY AUTOINCREMENT,
                     nome TEXT, 
-                    matricula TEXT
+                    matricula TEXT UNIQUE
                   
         )""")
         print("Tabela Professores criada com sucesso.")
@@ -81,7 +79,9 @@ class Aluno:
     @property
     def matricula(self):
         return self._matricula
-
+    
+    
+    
         
 class Professor:
     def __init__(self, nome, matricula):
@@ -101,38 +101,14 @@ class Turma:
     def __init__(self, disciplina, professor):
         self._disciplina = disciplina
         self._professor = professor
-        self._alunos = []
+        self._id_turma = None
     
-    def adicionar_aluno(self, nome, matricula):
-        aluno = Aluno(nome, matricula)
-        cur.execute("INSERT INTO Alunos VALUES (?, ?)", (nome, matricula))
-        con.commit()
-        self._alunos.append(aluno)
-        
-    def remover_aluno(self, aluno_id):
-        self._alunos = [aluno for aluno in self._alunos if aluno.id_aluno != aluno_id]
-        cur.execute("DELETE FROM Turmas_Alunos WHERE id_turma = ? AND id_aluno = ?", (self.id_turma, aluno_id))
-        con.commit()
-        
-    def ver_alunos(self):
-        try:
-            with con:
-                cur = con.cursor()
-                cur.execute("SELECT nome, matricula FROM Alunos INNER JOIN Turmas_Alunos ON Alunos.id_aluno = Turmas_Alunos.id_aluno WHERE Turmas_Alunos.id_turma = ?", (self.id_turma,))
-                alunos = cur.fetchall()
-
-                if alunos:
-                    for i, aluno in enumerate(alunos):
-                        nome = aluno[0]
-                        matricula = aluno[1]
-                        print(f"{i+1} - Nome: {nome} Matrícula: {matricula}")
-                else:
-                    print("Não há alunos matriculados nesta turma.")
-
-        except sqlite3.Error as e:
-            print("Erro ao obter os alunos da turma:", e)
 
 class Coordenador:
+    def __init__(self):
+        self._id_turma = None
+        self._alunos=[]
+        self.nova_lista =[]
     def criar_turma(self, disciplina, professor, alunos):
         try:
             with con:
@@ -146,6 +122,7 @@ class Coordenador:
                 cur.execute("INSERT INTO Turmas (disciplina, id_professor) VALUES (?, ?)",
                             (disciplina, professor_id))
                 turma_id = cur.lastrowid
+                self.set_id_turma(turma_id)
 
                 # Inserir alunos na tabela Alunos e relacionar com a turma na tabela Turmas_Alunos
                 for aluno in alunos:
@@ -188,6 +165,51 @@ class Coordenador:
     
     
     
+    def adicionar_aluno(self, nome, matricula):
+        aluno = Aluno(nome, matricula)
+        self._alunos.append(aluno)
+        cur.execute("INSERT INTO Alunos (nome,matricula) VALUES (?, ?)", (nome, matricula))
+        con.commit()
+
+        
+    def remover_aluno(self, aluno_id):
+        self._alunos = [aluno for aluno in self._alunos if aluno.id_aluno != aluno_id]
+        self._alunos.remove(aluno_id)
+        cur.execute("DELETE FROM Turmas_Alunos WHERE id_turma = ? AND id_aluno = ?", (self.id_turma, aluno_id))
+        con.commit()
+        
+    def ver_alunos(self):
+        
+        try:
+            with con:
+                cur = con.cursor()
+                cur.execute("SELECT nome, matricula FROM Alunos INNER JOIN Turmas_Alunos ON Alunos.id_aluno = Turmas_Alunos.id_aluno WHERE Turmas_Alunos.id_turma = ?", (self._id_turma,))
+                alunos = cur.fetchall()
+                for aluno in alunos:
+                    cur.__str__(aluno)
+
+        except sqlite3.Error as e:
+            print("Erro ao obter os alunos da turma:", e)
+    
+    def set_id_turma(self, id_turma):
+        self._id_turma = id_turma
+        
+    def editar_aluno(self, nome_aluno, novo_nome=None, nova_matricula=None):
+        try:
+            with con:
+                cur = con.cursor()
+
+                if novo_nome:
+                    cur.execute("UPDATE Alunos SET nome = ? WHERE nome = ?",
+                            (novo_nome, nome_aluno))
+
+                if nova_matricula:
+                    cur.execute("UPDATE Alunos SET matricula = ? WHERE nome = ?",
+                            (nova_matricula, nome_aluno))
+
+                print("Aluno atualizado com sucesso!")
+        except Exception as e:
+            print("Ocorreu um erro ao atualizar o aluno:", str(e))
     
     def cadastrar_professor(self, nome, matricula):
         try:
@@ -200,23 +222,23 @@ class Coordenador:
         except sqlite3.Error as e:
             print("Erro ao cadastrar o professor:", e)
 
-    def editar_professor(self, professor_id, novo_nome=None, nova_matricula=None):
+    def editar_professor(self, nome_professor, novo_nome=None, nova_matricula=None):
         try:
             with con:
                 cur = con.cursor()
 
                 if novo_nome:
-                    cur.execute("UPDATE Professores SET nome = ? WHERE id_professor = ?",
-                                (novo_nome, professor_id))
+                    cur.execute("UPDATE Professores SET nome = ? WHERE nome = ?",
+                            (novo_nome, nome_professor))
 
                 if nova_matricula:
-                    cur.execute("UPDATE Professores SET matricula = ? WHERE id_professor = ?",
-                                (nova_matricula, professor_id))
+                    cur.execute("UPDATE Professores SET matricula = ? WHERE nome = ?",
+                            (nova_matricula, nome_professor))
 
                 print("Professor atualizado com sucesso!")
+        except Exception as e:
+            print("Ocorreu um erro ao atualizar o professor:", str(e))
 
-        except sqlite3.Error as e:
-            print("Erro ao editar o professor:", e)
 
     def ver_dados_professor(self, professor_id):
         try:
@@ -289,194 +311,6 @@ class Coordenador:
 
         except sqlite3.Error as e:
             print("Erro ao consultar os alunos da turma:", e)
-# Criar uma janela Tkinter
-janela = Tk()
-
-janela.title("Gestão de Turmas")
-janela.geometry("800x700")
-
-    
-    
-def opcoes_professor():
-    btn_cadastrar_professor = Button(janela, text="Cadastrar Professor", command=cadastrar_professor)
-    btn_cadastrar_professor.pack()
-    
-    btn_editar_professor = Button(janela, text="Editar Professor", command=editar_professor)
-    btn_editar_professor.pack()
-    
-    btn_ver_dados_professor = Button(janela, text="Ver dados do Professor", command=ver_dados_professor)
-    btn_ver_dados_professor.pack()
-    
-    btn_excluir_professor = Button(janela, text="Excluir Professor", command=excluir_professor)
-    btn_excluir_professor.pack()
-    
-    btn_visualizar_turmas_professor = Button(janela, text="Ver Turmas do professor", command=ver_turma_professor)
-    btn_visualizar_turmas_professor.pack()
-    
-    btn_visualizar_alunos = Button(janela, text="Ver alunos da turma específica", command=ver_alunos_turma)
-    btn_visualizar_alunos.pack()
-    
-def opcoes_coordenador():
-    pass
-
-def opcoes_aluno():
-    pass
-
-
-btn_professor = Button(janela, text="Menu Professor", command=opcoes_professor)
-btn_professor.pack()
-
-btn_coordenador = Button(janela, text="Menu Coordenador", command=opcoes_coordenador)
-btn_coordenador.pack()
-btn_aluno = Button(janela, text="Menu Coordenador", command=opcoes_aluno)
-btn_aluno.pack()
-
-
-# Criar funções para ações dos botões
-
-def cadastrar_professor():
-    coordenador = Coordenador()
-    nome_professor = entrada_professor_nome.get()
-    matricula_professor = entrada_professor_matricula.get()
-    try:
-        if not nome_professor.replace(' ', '').isalpha():
-            raise ValueError("O nome do professor deve ser composto apenas por letras.")
-    except ValueError as error:
-        # Exibe uma mensagem de erro caso a validação falhe
-        tk.messagebox.showerror("Erro", str(error))
-        return
-
-    # Verifica se a matrícula contém apenas números
-    try:
-        int(matricula_professor)
-    except ValueError:
-        # Exibe uma mensagem de erro caso a validação falhe
-        tk.messagebox.showerror("Erro", "A matrícula deve conter apenas números.")
-        return
-
-    
-    professor = Professor(nome_professor, matricula_professor)
-   
-
-    coordenador.cadastrar_professor(nome_professor, matricula_professor)
-    
-def cadastrar_turma():
-    coordenador = Coordenador()
-    disciplina = entrada_disciplina.get()
-    nome_professor = entrada_professor_nome.get()
-    matricula_professor = entrada_professor_matricula.get()
-    nome_aluno = entrada_aluno_nome.get()
-    matricula_aluno = entrada_aluno_matricula.get()
-
-    professor = Professor(nome_professor, matricula_professor)
-    aluno = Aluno(nome_aluno, matricula_aluno)
-
-    coordenador.criar_turma(disciplina, professor, [aluno])
-
-    # Limpar campos de entrada
-    entrada_disciplina.delete(0, END)
-    entrada_professor_nome.delete(0, END)
-    entrada_professor_matricula.delete(0, END)
-    entrada_aluno_nome.delete(0, END)
-    entrada_aluno_matricula.delete(0, END)
-
-
-# Adicionar aluno à turma
-entrada_professor_nome = tk.Entry(janela)
-entrada_professor_nome.pack()
-
-entrada_professor_matricula = tk.Entry(janela)
-entrada_professor_matricula.pack()
-
-
-# Criar botões para as ações
-
-label_professor_id = Label(janela, text="ID do Professor:")
-label_professor_id.pack()
-entry_professor_id = Entry(janela)
-entry_professor_id.pack()
-
-
-def editar_professor():
-    coordenador = Coordenador()
-    nome_professor = entrada_professor_nome.get()
-    matricula_professor = entrada_professor_matricula.get()
-    professor_id = int(entrada_professor_id.get())
-
-    try:
-        cur.execute("SELECT nome, matricula FROM Professores WHERE id_professor = ?", (professor_id,))
-        professor_info = cur.fetchone()
-        if professor_info:
-            nome, matricula = professor_info
-            entrada_professor_nome.delete(0, END)
-            entrada_professor_nome.insert(0, nome)
-            entrada_professor_matricula.delete(0, END)
-            entrada_professor_matricula.insert(0, matricula)
-        else:
-            print("Professor não encontrado.")
-    except sqlite3.Error as e:
-        print("Erro ao buscar informações do professor:", e)
-
-
-def salvar_edicao_professor():
-    professor_id = int(entrada_professor_id.get())
-    nome = entrada_professor_nome.get()
-    matricula = entrada_professor_matricula.get()
-
-    try:
-        cur.execute("UPDATE Professores SET nome = ?, matricula = ? WHERE id_professor = ?", (nome, matricula, professor_id))
-        con.commit()
-        print("Informações do professor atualizadas com sucesso.")
-    except sqlite3.Error as e:
-        print("Erro ao salvar as informações do professor:", e)
-
-    entrada_professor_id.delete(0, END)
-    entrada_professor_nome.delete(0, END)
-    entrada_professor_matricula.delete(0, END)
-    
-
-def ver_dados_professor():
-    pass
-
-def excluir_professor():
-    pass
-
-def ver_turma_professor():
-    pass
-
-def ver_alunos_turma():
-    id_turma = entrada_id_turma.get()
-    coordenador = Coordenador()
-    coordenador.visualizar_alunos_turma(id_turma)
-
-    # Limpar campo de entrada
-    entrada_id_turma.delete(0, END)
-# Campos para editar as informações do professor
-label_professor_nome = Label(janela, text="Nome do Professor:")
-label_professor_nome.pack()
-entry_professor_nome = Entry(janela)
-entry_professor_nome.pack()
-
-label_professor_matricula = Label(janela, text="Matrícula do Professor:")
-label_professor_matricula.pack()
-entry_professor_matricula = Entry(janela)
-entry_professor_matricula.pack()
-
-button_salvar_edicao = Button(janela, text="Salvar", command=salvar_edicao_professor)
-button_salvar_edicao.pack()
-btn_cadastrar_turma = Button(janela, text="Cadastrar Turma", command=cadastrar_turma)
-btn_cadastrar_turma.pack()
-
-lbl_id_turma = Label(janela, text="ID da Turma:")
-lbl_id_turma.pack()
-entrada_id_turma = Entry(janela)
-entrada_id_turma.pack()
-
-btn_ver_alunos_turma = Button(janela, text="Ver Alunos da Turma", command=ver_alunos_turma)
-btn_ver_alunos_turma.pack()
-
-button_editar_professor = Button(janela, text="Editar Professor", command=editar_professor)
-button_editar_professor.pack()
-# Executar o loop de eventos do Tkinter
-janela.mainloop()
-con.close()
+            
+        finally:
+            con.close()            
