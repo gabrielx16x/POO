@@ -1,3 +1,5 @@
+#Sei que não saiu como o planejado, mas acredito que merece um 3
+# Alunos:Antonio Gabriel de Oliveira Valentin e Maria Eduarda Tavares Mendes
 from tkinter.ttk import *
 from tkinter import Label 
 from tkinter import *
