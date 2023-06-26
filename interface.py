@@ -13,7 +13,7 @@ from PIL import ImageTk, Image
 # cores
 co0 = "#2e2d2b"  # Preta
 co1 = "#feffff"  # Branca   
-co2 = "#e5e5e5"  # grey
+co2 = "#e5e5e5"  # Cinza
 co3 = "#00a095"  # Verde
 co4 = "#403d3d"   # letra
 co6 = "#003452"   # azul
@@ -229,7 +229,6 @@ def mostrar_alunos():
     app_nome = Label(frame_tabela, text="Tabela de estudantes", height=1,pady=0, padx=0, relief="flat", anchor=NW, font=('Ivy 10 bold'), bg=co1, fg=co4)
     app_nome.grid(row=0, column=0, padx=0, pady=10, sticky=NSEW)
 
-  # creating a treeview with dual scrollbars
     list_header = ['id','Nome','Matricula']
   
 
@@ -241,15 +240,15 @@ def mostrar_alunos():
 
     except sqlite3.Error as e:
         print("Erro ao obter os alunos:", e)
-        df_list_alunos = []  # Set an empty list if there's an error
+        df_list_alunos = []
 
     global tree_aluno
 
     tree_aluno = ttk.Treeview(frame_tabela, selectmode="extended",columns=list_header, show="headings")
 
-  # vertical scrollbar
+
     vsb = ttk.Scrollbar(frame_tabela, orient="vertical", command=tree_aluno.yview)
-  # horizontal scrollbar
+  
     hsb = ttk.Scrollbar(frame_tabela, orient="horizontal", command=tree_aluno.xview)
 
     tree_aluno.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -328,12 +327,12 @@ def salvar():
     
 
 
-#Função de control
+#Função de controle
 def control(i):
      #cadastro de aluno
     if i == 'cadastro':
         for widget in frame_detalhes.winfo_children():
-            widget.pack_forget()  # Ou widget.grid_remove() se estiver usando grid layout
+            widget.pack_forget() 
 
         # Limpar o conteúdo dos widgets dentro do frame_tabela
         for widget in frame_tabela.winfo_children():
@@ -553,7 +552,6 @@ def mostrar_professores():
     app_nome_professor = Label(frame_tabela_professor, text="Tabela de Professores", height=1,pady=0, padx=0, relief="flat", anchor=NW, font=('Ivy 10 bold'), bg=co1, fg=co4)
     app_nome_professor.grid(row=0, column=0, padx=0, pady=10, sticky=NSEW)
 
-# creating a treeview with dual scrollbars
     list_header = ['id','Nome','Matricula']
 
 
@@ -565,15 +563,14 @@ def mostrar_professores():
 
     except sqlite3.Error as e:
         print("Erro ao obter os professores:", e)
-        df_list = []  # Set an empty list if there's an error
+        df_list = []  
 
     global tree_professor
 
     tree_professor = ttk.Treeview(frame_tabela_professor, selectmode="extended",columns=list_header, show="headings")
 
-# vertical scrollbar
     vsb = ttk.Scrollbar(frame_tabela_professor, orient="vertical", command=tree_professor.yview)
-# horizontal scrollbar
+
     hsb = ttk.Scrollbar(frame_tabela_professor, orient="horizontal", command=tree_professor.xview)
 
     tree_professor.configure(yscrollcommand=vsb.set, xscrollcommand=hsb.set)
@@ -588,7 +585,7 @@ def mostrar_professores():
 
     for col in list_header:
         tree_professor.heading(col, text=col.title(), anchor=NW)
-# adjust the column's width to the header string
+
         tree_aluno.column(col, width=h[n],anchor=hd[n])
 
     n+=1
@@ -605,7 +602,7 @@ botao_professor = Button(frame_detalhes_principal,anchor=CENTER, text="Menu Prof
 botao_professor.place(x=80, y=150)
 botao_coordenador = Button(frame_detalhes_principal, text="Menu Coordenador", command=coordenador, width=15, overrelief=RIDGE)
 botao_coordenador.place(x=80, y=200)
-# Executando a root
+# Executando a janela
 
 
 
